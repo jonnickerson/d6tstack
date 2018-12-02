@@ -88,3 +88,12 @@ If you cannot install from github, use the latest published version `pip install
 *  [SQL examples notebook](https://github.com/d6t/d6tstack/blob/master/examples-sql.ipynb) - Fast loading of CSV to SQL with pandas preprocessing
 *  [Official docs](http://d6tstack.readthedocs.io/en/latest/py-modindex.html) - Detailed documentation for modules, classes, functions
 *  [www.databolt.tech](https://www.databolt.tech/index-combine.html) - Web app if you don't want to code
+
+## Also Available
+
+Check out other d6t libraries to solve common data engineering problems, including  
+* data ingest, quickly ingest raw data
+* fuzzy joins, quickly join data
+* data pipes, quick share and distribute data
+
+https://github.com/d6t/d6t-python
