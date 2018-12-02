@@ -97,3 +97,5 @@ Check out other d6t libraries to solve common data engineering problems, includi
 * data pipes, quick share and distribute data
 
 https://github.com/d6t/d6t-python
+
+And we encourage you to join the Databolt blog to get updates and tips+tricks http://blog.databolt.tech
