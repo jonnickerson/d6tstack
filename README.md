@@ -1,13 +1,12 @@
-# Databolt File Stack
+# Databolt File Ingest
 
-Automatically combine multiple files into one by stacking them together. Works for XLS, CSV, TXT which can be exported to CSV, Parquet, SQL and Pandas.
-
-Vendors often send large datasets in multiple files. Often there are missing and misaligned columns between files that have to be manually cleaned. With DataBolt File Combiner you can easily stack them together into one dataframe.
+Quickly ingest raw files. Works for XLS, CSV, TXT which can be exported to CSV, Parquet, SQL and Pandas. `d6tstack` solves many performance and other problems typically encountered when ingesting raw files. 
 
 ![](https://www.databolt.tech/images/combiner-landing-git.png)
 
 ### Features include
 
+* Fast pd.to_sql() for postgres and mysql
 * Quickly check columns for consistency across files
 * Fix added/missing columns
 * Fix renamed columns
