@@ -89,7 +89,7 @@ If you cannot install from github, use the latest published version `pip install
 *  [Official docs](http://d6tstack.readthedocs.io/en/latest/py-modindex.html) - Detailed documentation for modules, classes, functions
 *  [www.databolt.tech](https://www.databolt.tech/index-combine.html) - Web app if you don't want to code
 
-## Also Available
+## Faster Data Engineering
 
 Check out other d6t libraries to solve common data engineering problems, including  
 * data ingest, quickly ingest raw data
