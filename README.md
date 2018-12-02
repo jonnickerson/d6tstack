@@ -94,7 +94,7 @@ If you cannot install from github, use the latest published version `pip install
 Check out other d6t libraries to solve common data engineering problems, including  
 * data ingest, quickly ingest raw data
 * fuzzy joins, quickly join data
-* data pipes, quick share and distribute data
+* data pipes, quickly share and distribute data
 
 https://github.com/d6t/d6t-python
 
