@@ -1,6 +1,6 @@
 # Databolt File Ingest
 
-Quickly ingest raw files. Works for XLS, CSV, TXT which can be exported to CSV, Parquet, SQL and Pandas. `d6tstack` solves many performance and other problems typically encountered when ingesting raw files. 
+Quickly ingest raw files. Works for XLS, CSV, TXT which can be exported to CSV, Parquet, SQL and Pandas. `d6tstack` solves many performance and schema problems typically encountered when ingesting raw files. 
 
 ![](https://www.databolt.tech/images/combiner-landing-git.png)
 
