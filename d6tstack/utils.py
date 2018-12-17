@@ -1,86 +1,5 @@
-import os
-import numpy as np
 import pandas as pd
-from openpyxl.utils import coordinate_from_string
-from d6tstack.helpers import compare_pandas_versions
-
-
-def read_excel_advanced(fname, remove_blank_cols=True, remove_blank_rows=True, collapse_header=True,
-                        header_xls_range=None, header_xls_start=None, header_xls_end=None,
-                        is_preview=False, nrows_preview=3, **kwds):
-    """
-    Read Excel files to pandas dataframe with advanced options like set header ranges and remove blank columns and rows
-
-    Args:
-        fname (str): Excel file path
-        remove_blank_cols (bool): remove blank columns
-        remove_blank_rows (bool): remove blank rows
-        collapse_header (bool): to convert multiline header to a single line string
-        header_xls_range (string): range of headers in excel, eg: A4:B16
-        header_xls_start (string): Starting cell of excel for header range, eg: A4
-        header_xls_end (string): End cell of excel for header range, eg: B16
-        is_preview (bool): Read only first `nrows_preview` lines
-        nrows_preview (integer): Initial number of rows to be used for preview columns (default: 3)
-        kwds (mixed): parameters for `pandas.read_excel()` to pass through
-
-    Returns:
-         df (dataframe): pandas dataframe
-
-    Note:
-        You can pass in any `pandas.read_excel()` parameters in particular `sheet_name`
-
-    """
-    header = []
-
-    if header_xls_range:
-        if not (header_xls_start and header_xls_end):
-            header_xls_range = header_xls_range.split(':')
-            header_xls_start, header_xls_end = header_xls_range
-        else:
-            raise ValueError('Parameter conflict. Can only pass header_xls_range or header_xls_start with header_xls_end')
-
-    if header_xls_start and header_xls_end:
-        if 'skiprows' in kwds or 'usecols' in kwds:
-            raise ValueError('Parameter conflict. Cannot pass skiprows or usecols with header_xls')
-
-        scol, srow = coordinate_from_string(header_xls_start)
-        ecol, erow = coordinate_from_string(header_xls_end)
-
-        # header, skiprows, usecols
-        header = list(range(erow - srow + 1))
-        usecols = scol + ":" + ecol
-        skiprows = srow - 1
-
-        if compare_pandas_versions(pd.__version__, "0.20.3") > 0:
-            df = pd.read_excel(fname, header=header, skiprows=skiprows, usecols=usecols, **kwds)
-        else:
-            df = pd.read_excel(fname, header=header, skiprows=skiprows, parse_cols=usecols, **kwds)
-    else:
-        df = pd.read_excel(fname, **kwds)
-
-    # remove blank cols and rows
-    if remove_blank_cols:
-        df = df.dropna(axis='columns', how='all')
-    if remove_blank_rows:
-        df = df.dropna(axis='rows', how='all')
-
-    # todo: add df.reset_index() once no actual data in index
-
-    # clean up header
-    if collapse_header:
-        if len(header) > 1:
-            df.columns = [' '.join([s for s in col if not 'Unnamed' in s]).strip().replace("\n", ' ')
-                          for col in df.columns.values]
-            df = df.reset_index()
-        else:
-            df.rename(columns=lambda x: x.strip().replace("\n", ' '), inplace=True)
-
-    # preview
-    if is_preview:
-        df = df.head(nrows_preview)
-
-    return df
-
+import warnings
 
 class PrintLogger(object):
     def send_log(self, msg, status):
@@ -89,15 +8,66 @@ class PrintLogger(object):
     def send(self, data):
         print(data)
 
+import os
 
-def pd_to_psql(df, uri, tablename, schema_name=None, if_exists='fail'):
+def pd_readsql_query_from_sqlengine(uri, sql, schema_name=None, connect_args=None):
+    """
+    Load SQL statement into pandas dataframe using `sql_engine.execute` making execution faster.
+
+    Args:
+        uri (str): postgres psycopg2 sqlalchemy database uri
+        sql (str): sql query
+        schema_name (str): name of schema
+        connect_args (dict): dictionary of connection arguments to pass to `sqlalchemy.create_engine`
+
+    Returns:
+        df: pandas dataframe
+
+    """
+
+    import sqlalchemy
+    if connect_args is not None:
+        sql_engine = sqlalchemy.create_engine(uri, connect_args=connect_args)
+    elif schema_name is not None:
+        if 'psycopg2' in uri:
+            sql_engine = sqlalchemy.create_engine(uri, connect_args={'options': '-csearch_path={}'.format(schema_name)})
+        else:
+            raise NotImplementedError('only `psycopg2` supported with schema_name, pass connect_args for your db engine')
+    else:
+        sql_engine = sqlalchemy.create_engine(uri)
+
+    sql = sql_engine.execute(sql)
+    df = pd.DataFrame(sql.fetchall())
+
+    return df
+
+
+def pd_readsql_table_from_sqlengine(uri, table_name, schema_name=None, connect_args=None):
+    """
+    Load SQL table into pandas dataframe using `sql_engine.execute` making execution faster. Convenience function that returns full table.
+
+    Args:
+        uri (str): postgres psycopg2 sqlalchemy database uri
+        table_name (str): table
+        schema_name (str): name of schema
+        connect_args (dict): dictionary of connection arguments to pass to `sqlalchemy.create_engine`
+
+    Returns:
+        df: pandas dataframe
+
+    """
+
+    return pd_readsql_query_from_sqlengine(uri, "SELECT * FROM {};".fromat(table_name), schema_name=schema_name, connect_args=connect_args)
+
+
+def pd_to_psql(df, uri, table_name, schema_name=None, if_exists='fail'):
     """
     Load pandas dataframe into a sql table using native postgres COPY FROM.
 
     Args:
         df (dataframe): pandas dataframe
         uri (str): postgres psycopg2 sqlalchemy database uri
-        tablename (str): table to store data in
+        table_name (str): table to store data in
         schema_name (str): name of schema to write to
         if_exists (str): {‘fail’, ‘replace’, ‘append’}, default ‘fail’. See `pandas.to_sql()` for details
 
@@ -112,30 +82,33 @@ def pd_to_psql(df, uri, tablename, schema_name=None, if_exists='fail'):
     import sqlalchemy
     import io
 
-    sql_engine = sqlalchemy.create_engine(uri, connect_args={'options': '-csearch_path={}'.format(schema)})
+    if schema_name is not None:
+        sql_engine = sqlalchemy.create_engine(uri, connect_args={'options': '-csearch_path={}'.format(schema_name)})
+    else:
+        sql_engine = sqlalchemy.create_engine(uri)
     sql_cnxn = sql_engine.raw_connection()
     cursor = sql_cnxn.cursor()
 
-    df[:0].to_sql(tablename, sql_engine, schema=schema_name, if_exists=if_exists, index=False)
+    df[:0].to_sql(table_name, sql_engine, schema=schema_name, if_exists=if_exists, index=False)
 
     fbuf = io.StringIO()
     df.to_csv(fbuf, index=False, header=False)
     fbuf.seek(0)
-    cursor.copy_from(fbuf, tablename, sep=',', null='')
+    cursor.copy_from(fbuf, table_name, sep=',', null='')
     sql_cnxn.commit()
     cursor.close()
 
     return True
 
-def pd_to_mysql(df, uri, tablename, schema_name=None, if_exists='fail', tmpfile='mysql.csv'):
+
+def pd_to_mysql(df, uri, table_name, if_exists='fail', tmpfile='mysql.csv'):
     """
     Load dataframe into a sql table using native postgres LOAD DATA LOCAL INFILE.
 
     Args:
         df (dataframe): pandas dataframe
         uri (str): mysql mysqlconnector sqlalchemy database uri
-        tablename (str): table to store data in
-        schema_name (str): name of schema to write to
+        table_name (str): table to store data in
         if_exists (str): {‘fail’, ‘replace’, ‘append’}, default ‘fail’. See `pandas.to_sql()` for details
         tmpfile (str): filename for temporary file to load from
 
@@ -148,17 +121,57 @@ def pd_to_mysql(df, uri, tablename, schema_name=None, if_exists='fail', tmpfile=
 
     import sqlalchemy
 
-    sql_engine = sqlalchemy.create_engine(uri, connect_args={'options': '-csearch_path={}'.format(schema)})
+    sql_engine = sqlalchemy.create_engine(uri)
 
-    df[:0].to_sql(tablename, sql_engine, schema = schema_name, if_exists=if_exists, index=False)
+    df[:0].to_sql(table_name, sql_engine, if_exists=if_exists, index=False)
 
     logger = PrintLogger()
     logger.send_log('creating ' + tmpfile, 'ok')
     df.to_csv(tmpfile, na_rep='\\N', index=False)
     logger.send_log('loading ' + tmpfile, 'ok')
-    sql_load = "LOAD DATA LOCAL INFILE '%s' INTO TABLE %s FIELDS TERMINATED BY ',' IGNORE 1 LINES;" % (tmpfile, tablename)
+    sql_load = "LOAD DATA LOCAL INFILE '%s' INTO TABLE %s FIELDS TERMINATED BY ',' IGNORE 1 LINES;" % (tmpfile, table_name)
     sql_engine.execute(sql_load)
 
     os.remove(tmpfile)
 
     return True
+
+def pd_to_mssql(df, uri, table_name, schema_name=None, if_exists='fail', tmpfile='mysql.csv'):
+    """
+    Load dataframe into a sql table using native postgres LOAD DATA LOCAL INFILE.
+
+    Args:
+        df (dataframe): pandas dataframe
+        uri (str): mysql mysqlconnector sqlalchemy database uri
+        table_name (str): table to store data in
+        schema_name (str): name of schema to write to
+        if_exists (str): {‘fail’, ‘replace’, ‘append’}, default ‘fail’. See `pandas.to_sql()` for details
+        tmpfile (str): filename for temporary file to load from
+
+    Returns:
+        bool: True if loader finished
+
+    """
+    if not 'mssql+pymssql' in uri:
+        raise ValueError('need to use mssql+pymssql uri (conda install -c prometeia pymssql)')
+
+    warnings.warn('`.pd_to_mssql()` is experimental, if any problems please raise an issue on https://github.com/d6t/d6tstack/issues or make a pull request')
+    import sqlalchemy
+
+    sql_engine = sqlalchemy.create_engine(uri)
+
+    df[:0].to_sql(table_name, sql_engine, if_exists=if_exists, index=False)
+
+    logger = PrintLogger()
+    logger.send_log('creating ' + tmpfile, 'ok')
+    df.to_csv(tmpfile, na_rep='\\N', index=False)
+    logger.send_log('loading ' + tmpfile, 'ok')
+    if schema_name is not None:
+        table_name = '{}.{}'.format(schema_name,table_name)
+    sql_load = "BULK INSERT {} FROM '{}';".format()(table_name, tmpfile)
+    sql_engine.execute(sql_load)
+
+    os.remove(tmpfile)
+
+    return True
+

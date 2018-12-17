@@ -485,13 +485,13 @@ class CombinerCSV(object):
 
         return True
 
-    def to_psql_combine(self, uri, tablename, if_exists='fail'):
+    def to_psql_combine(self, uri, table_name, if_exists='fail'):
         """
         Load all files into a sql table using native postgres COPY FROM. Chunks data load to reduce memory consumption
 
         Args:
             uri (str): postgres psycopg2 sqlalchemy database uri
-            tablename (str): table to store data in
+            table_name (str): table to store data in
             if_exists (str): {‘fail’, ‘replace’, ‘append’}, default ‘fail’. See `pandas.to_sql()` for details
 
         Returns:
@@ -511,26 +511,26 @@ class CombinerCSV(object):
         sql_cnxn = sql_engine.raw_connection()
         cursor = sql_cnxn.cursor()
 
-        self.df_combine_preview[:0].to_sql(tablename, sql_engine, if_exists=if_exists, index=False)
+        self.df_combine_preview[:0].to_sql(table_name, sql_engine, if_exists=if_exists, index=False)
 
         for fname in self.fname_list:
             for dfc in self._read_csv_yield(fname, self.read_csv_params):
                 fbuf = io.StringIO()
                 dfc.astype(self.df_combine_preview.dtypes).to_csv(fbuf, index=False, header=False)
                 fbuf.seek(0)
-                cursor.copy_from(fbuf, tablename, sep=',', null='')
+                cursor.copy_from(fbuf, table_name, sep=',', null='')
         sql_cnxn.commit()
         cursor.close()
 
         return True
 
-    def to_mysql_combine(self, uri, tablename, if_exists='fail', tmpfile='mysql.csv'):
+    def to_mysql_combine(self, uri, table_name, if_exists='fail', tmpfile='mysql.csv'):
         """
         Load all files into a sql table using native postgres LOAD DATA LOCAL INFILE. Chunks data load to reduce memory consumption
 
         Args:
             uri (str): mysql mysqlconnector sqlalchemy database uri
-            tablename (str): table to store data in
+            table_name (str): table to store data in
             if_exists (str): {‘fail’, ‘replace’, ‘append’}, default ‘fail’. See `pandas.to_sql()` for details
             tmpfile (str): filename for temporary file to load from
 
@@ -547,14 +547,54 @@ class CombinerCSV(object):
 
         sql_engine = sqlalchemy.create_engine(uri)
 
-        self.df_combine_preview[:0].to_sql(tablename, sql_engine, if_exists=if_exists, index=False)
+        self.df_combine_preview[:0].to_sql(table_name, sql_engine, if_exists=if_exists, index=False)
 
         if self.logger:
             self.logger.send_log('creating ' + tmpfile, 'ok')
         self.to_csv_combine(tmpfile, write_params={'na_rep':'\\N'})
         if self.logger:
             self.logger.send_log('loading ' + tmpfile, 'ok')
-        sql_load = "LOAD DATA LOCAL INFILE '%s' INTO TABLE %s FIELDS TERMINATED BY ',' IGNORE 1 LINES;" % (tmpfile, tablename)
+        sql_load = "LOAD DATA LOCAL INFILE '%s' INTO TABLE %s FIELDS TERMINATED BY ',' IGNORE 1 LINES;" % (tmpfile, table_name)
+        sql_engine.execute(sql_load)
+
+        os.remove(tmpfile)
+
+        return True
+
+    def to_mssql_combine(self, uri, table_name, schema_name=None, if_exists='fail', tmpfile='mysql.csv'):
+        """
+        Load all files into a sql table using native postgres LOAD DATA LOCAL INFILE. Chunks data load to reduce memory consumption
+
+        Args:
+            uri (str): mysql mysqlconnector sqlalchemy database uri
+            table_name (str): table to store data in
+            schema_name (str): name of schema to write to
+            if_exists (str): {‘fail’, ‘replace’, ‘append’}, default ‘fail’. See `pandas.to_sql()` for details
+            tmpfile (str): filename for temporary file to load from
+
+        Returns:
+            bool: True if loader finished
+
+        """
+        if not 'mssql+pymssql' in uri:
+            raise ValueError('need to use mssql+pymssql uri (conda install -c prometeia pymssql)')
+
+        self._combine_preview_available()
+
+        import sqlalchemy
+
+        sql_engine = sqlalchemy.create_engine(uri)
+
+        self.df_combine_preview[:0].to_sql(table_name, sql_engine, schema=schema_name, if_exists=if_exists, index=False)
+
+        if self.logger:
+            self.logger.send_log('creating ' + tmpfile, 'ok')
+        self.to_csv_combine(tmpfile, write_params={'na_rep':'\\N'})
+        if self.logger:
+            self.logger.send_log('loading ' + tmpfile, 'ok')
+        if schema_name is not None:
+            table_name = '{}.{}'.format(schema_name,table_name)
+        sql_load = "BULK INSERT {} FROM '{}';".format()(table_name, tmpfile)
         sql_engine.execute(sql_load)
 
         os.remove(tmpfile)

@@ -1,23 +1,26 @@
 from setuptools import setup
 
+extras = {
+    'xls': ['openpyxl','xlrd'],
+    'parquet': ['pyarrow'],
+}
+
 setup(
     name='d6tstack',
-    version='0.1.3',
+    version='0.1.4',
     packages=['d6tstack'],
     url='https://github.com/d6t/d6tstack',
-    download_url = 'https://github.com/d6t/d6tstack/archive/0.1.3.tar.gz',
     license='MIT',
     author='DataBolt Team',
     author_email='support@databolt.tech',
-    description='Databolt Python Library',
-    long_description='Databolt python library - accelerate data engineering. '
-                     'DataBolt provides tools to reduce the time it takes to get your data ready for '
-                     'evaluation and analysis.',
+    description='d6tstack: Quickly ingest CSV and XLS files. Export to pandas, SQL, parquet',
+    long_description='Quickly ingest raw files. Works for XLS, CSV, TXT which can be exported to CSV, Parquet, SQL and Pandas. d6tstack solves many performance and schema problems typically encountered when ingesting raw files.',
     install_requires=[
-        'numpy','openpyxl','xlrd','pandas>=0.22.0','xlwt','sqlalchemy','scipy','pyarrow','psycopg2','mysql-connector','pymysql'
+        'numpy','openpyxl','xlrd','pandas>=0.22.0','xlwt','sqlalchemy','scipy'
     ],
+    extras_require=extras,
     include_package_data=True,
     python_requires='>=3.5',
-    keywords=['d6tstack', 'fast-data-evaluation'],
+    keywords=['d6tstack', 'ingest csv'],
     classifiers=[]
 )

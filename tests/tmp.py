@@ -2,9 +2,40 @@ import importlib
 import d6tstack.utils
 importlib.reload(d6tstack.utils)
 
-cfg_path_folder_base = '/mnt/data/data.raw/travelclick/'
-cfg_path = cfg_path_folder_base+'predict/STR Rolling Weekly Since 9-11-01 to 4-14-18 values weekly.xlsx'
+import time
+import yaml
 
-# all
-df_str=d6tstack.utils.read_excel_advanced(cfg_path, header_xls_start="A5", header_xls_end="D7")
-df_str.head()
+config = yaml.load(open('tests/.test-cred.yaml'))
+
+cfg_uri_psql = config['rds']
+cfg_uri_psql = config['wlo']
+
+import pandas as pd
+import sqlalchemy
+
+sqlengine = sqlalchemy.create_engine(cfg_uri_psql)
+print(pd.read_sql_table('benchmark',sqlengine).head())
+
+dft = pd.read_sql_table('benchmark',sqlengine)
+dft.shape
+
+# cursor = sqlengine.cursor()
+sql = sqlengine.execute("SELECT * FROM benchmark;")
+dft2 = pd.DataFrame(sql.fetchall())
+dft2.shape
+sql.keys()
+
+importlib.reload(d6tstack.utils)
+
+start_time = time.time()
+dft2 = d6tstack.utils.pd_from_sqlengine(cfg_uri_psql, "SELECT * FROM benchmark;")
+assert dft2.shape==(100000, 23)
+print("--- %s seconds ---" % (time.time() - start_time))
+
+start_time = time.time()
+dft = pd.read_sql_table('benchmark',sqlengine)
+assert dft.shape==(100000, 23)
+print("--- %s seconds ---" % (time.time() - start_time))
+
+d6tstack.utils.test()
+
