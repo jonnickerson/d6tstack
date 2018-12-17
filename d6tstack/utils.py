@@ -60,7 +60,7 @@ def pd_readsql_table_from_sqlengine(uri, table_name, schema_name=None, connect_a
     return pd_readsql_query_from_sqlengine(uri, "SELECT * FROM {};".fromat(table_name), schema_name=schema_name, connect_args=connect_args)
 
 
-def pd_to_psql(df, uri, table_name, schema_name=None, if_exists='fail'):
+def pd_to_psql(df, uri, table_name, schema_name=None, if_exists='fail', sep=','):
     """
     Load pandas dataframe into a sql table using native postgres COPY FROM.
 
@@ -70,6 +70,7 @@ def pd_to_psql(df, uri, table_name, schema_name=None, if_exists='fail'):
         table_name (str): table to store data in
         schema_name (str): name of schema to write to
         if_exists (str): {‘fail’, ‘replace’, ‘append’}, default ‘fail’. See `pandas.to_sql()` for details
+        sep (str): separator for temp file, eg ',' or '\t'
 
     Returns:
         bool: True if loader finished
@@ -92,16 +93,16 @@ def pd_to_psql(df, uri, table_name, schema_name=None, if_exists='fail'):
     df[:0].to_sql(table_name, sql_engine, schema=schema_name, if_exists=if_exists, index=False)
 
     fbuf = io.StringIO()
-    df.to_csv(fbuf, index=False, header=False)
+    df.to_csv(fbuf, index=False, header=False, sep=sep)
     fbuf.seek(0)
-    cursor.copy_from(fbuf, table_name, sep=',', null='')
+    cursor.copy_from(fbuf, table_name, sep=sep, null='')
     sql_cnxn.commit()
     cursor.close()
 
     return True
 
 
-def pd_to_mysql(df, uri, table_name, if_exists='fail', tmpfile='mysql.csv'):
+def pd_to_mysql(df, uri, table_name, if_exists='fail', tmpfile='mysql.csv', sep=','):
     """
     Load dataframe into a sql table using native postgres LOAD DATA LOCAL INFILE.
 
@@ -111,6 +112,7 @@ def pd_to_mysql(df, uri, table_name, if_exists='fail', tmpfile='mysql.csv'):
         table_name (str): table to store data in
         if_exists (str): {‘fail’, ‘replace’, ‘append’}, default ‘fail’. See `pandas.to_sql()` for details
         tmpfile (str): filename for temporary file to load from
+        sep (str): separator for temp file, eg ',' or '\t'
 
     Returns:
         bool: True if loader finished
@@ -127,9 +129,9 @@ def pd_to_mysql(df, uri, table_name, if_exists='fail', tmpfile='mysql.csv'):
 
     logger = PrintLogger()
     logger.send_log('creating ' + tmpfile, 'ok')
-    df.to_csv(tmpfile, na_rep='\\N', index=False)
+    df.to_csv(tmpfile, na_rep='\\N', index=False, sep=sep)
     logger.send_log('loading ' + tmpfile, 'ok')
-    sql_load = "LOAD DATA LOCAL INFILE '%s' INTO TABLE %s FIELDS TERMINATED BY ',' IGNORE 1 LINES;" % (tmpfile, table_name)
+    sql_load = "LOAD DATA LOCAL INFILE '{}' INTO TABLE {} FIELDS TERMINATED BY '{}' IGNORE 1 LINES;".format(tmpfile, table_name, sep)
     sql_engine.execute(sql_load)
 
     os.remove(tmpfile)
