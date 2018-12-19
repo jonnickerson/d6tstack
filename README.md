@@ -83,9 +83,9 @@ d6tstack.convert_xls.XLStoCSVMultiFile(glob.glob('*.xls'),
 
 ## Installation
 
-We recommend using the latest version from github `pip install git+https://github.com/d6t/d6tstack.git`
+We recommend using the latest version from github `pip install git+https://github.com/d6t/d6tstack.git`.
 
-If you cannot install from github, use the latest published version `pip install d6tstack`. For Excel and parquet support, install `d6tstack[xls]` and `d6tstack[parquet]`. Certain database specific function require packages which you will be prompted for as you use them.
+**Currently the pypi version is slightly outdated, best to install from github. If you can't run the above command, clone and install with `pip install . `** If you cannot install from github, use the latest published version `pip install d6tstack`. For Excel and parquet support, install `d6tstack[xls]` and `d6tstack[parquet]`. Certain database specific function require packages which you will be prompted for as you use them.
 
 
 ## Documentation
