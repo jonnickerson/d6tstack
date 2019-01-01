@@ -15,6 +15,26 @@ df = pd.DataFrame({'a':range(10),'b':range(10)})
 d6tstack.utils.pd_to_psql(df,cfg_uri_psql,'quick',sep='\t',if_exists='replace')
 print(pd.read_sql_table('quick',sqlengine))
 
+
+
+import yaml
+config = yaml.load(open('.test-cred.yaml'))
+cfg_uri_psql = config['wlo']
+
+import pandas as pd
+df = pd.DataFrame({'a':range(10),'b':range(10),'name':['name,first name']*10})
+
+import d6tstack.utils
+d6tstack.utils.pd_to_psql(df,cfg_uri_psql,'quick',sep='\t',if_exists='replace')
+
+import sqlalchemy
+sqlengine = sqlalchemy.create_engine(cfg_uri_psql)
+print(pd.read_sql_table('quick',sqlengine))
+
+
+
+
+
 config = yaml.load(open('tests/.test-cred.yaml'))
 cfg_uri_mysql = config['local-mysql']
 sqlengine = sqlalchemy.create_engine(cfg_uri_mysql)

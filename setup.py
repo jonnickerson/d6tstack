@@ -16,7 +16,7 @@ setup(
     description='d6tstack: Quickly ingest CSV and XLS files. Export to pandas, SQL, parquet',
     long_description='Quickly ingest raw files. Works for XLS, CSV, TXT which can be exported to CSV, Parquet, SQL and Pandas. d6tstack solves many performance and schema problems typically encountered when ingesting raw files.',
     install_requires=[
-        'numpy','openpyxl','xlrd','pandas>=0.22.0','xlwt','sqlalchemy','scipy'
+        'numpy','pandas>=0.22.0','sqlalchemy','scipy'
     ],
     extras_require=extras,
     include_package_data=True,
