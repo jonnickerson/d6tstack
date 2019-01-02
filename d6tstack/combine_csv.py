@@ -8,6 +8,9 @@ import copy
 import itertools
 import os
 
+import d6tcollect
+d6tcollect.init(__name__)
+
 from .helpers import *
 from .utils import PrintLogger
 
@@ -30,7 +33,7 @@ def _direxists(fname, logger):
 # combiner
 # ******************************************************************
 
-class CombinerCSV(object):
+class CombinerCSV(object, metaclass=d6tcollect.Collect):
     """    
     Core combiner class. Sniffs columns, generates preview, combines aka stacks to various output formats.
 

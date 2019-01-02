@@ -68,6 +68,7 @@ False
 >>> c.to_mysql_combine('mysql+mysqlconnector://usr:pwd@localhost/db', 'tablename') # fast, using LOAD DATA LOCAL INFILE
 
 # read Excel files - see Excel examples notebook for more details
+import d6tstack.convert_xls
 
 d6tstack.convert_xls.read_excel_advanced('test.xls',
     sheet_name='Sheet1', header_xls_range="B2:E2")

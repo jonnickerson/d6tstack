@@ -12,6 +12,9 @@ import xlrd
 from openpyxl.utils import coordinate_from_string
 from d6tstack.helpers import compare_pandas_versions, check_valid_xls
 
+import d6tcollect
+d6tcollect.init(__name__)
+
 #******************************************************************
 # read_excel_advanced
 #******************************************************************
@@ -96,7 +99,7 @@ def read_excel_advanced(fname, remove_blank_cols=True, remove_blank_rows=True, c
 # XLSSniffer
 #******************************************************************
 
-class XLSSniffer(object):
+class XLSSniffer(object, metaclass=d6tcollect.Collect):
     """
 
     Extracts available sheets from MULTIPLE Excel files and runs diagnostics
@@ -207,7 +210,7 @@ class XLSSniffer(object):
 #******************************************************************
 # convertor
 #******************************************************************
-class XLStoBase(object):
+class XLStoBase(object, metaclass=d6tcollect.Collect):
     def __init__(self, if_exists='skip', output_dir=None, logger=None):
         """
 
@@ -270,7 +273,7 @@ class XLStoBase(object):
         return fname_out
 
 
-class XLStoCSVMultiFile(XLStoBase):
+class XLStoCSVMultiFile(XLStoBase, metaclass=d6tcollect.Collect):
     """
     
     Converts xls|xlsx files to csv files. Selects a SINGLE SHEET from each file. To extract MULTIPLE SHEETS from a file use XLStoCSVMultiSheet
@@ -370,7 +373,7 @@ class XLStoCSVMultiFile(XLStoBase):
         return fnames_converted
 
 
-class XLStoCSVMultiSheet(XLStoBase):
+class XLStoCSVMultiSheet(XLStoBase, metaclass=d6tcollect.Collect):
     """
     
     Converts ALL SHEETS from a SINGLE xls|xlsx files to separate csv files

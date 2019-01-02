@@ -8,6 +8,9 @@ Finds CSV settings and Excel sheets in multiple files. Often needed as input for
 import collections
 import csv
 
+import d6tcollect
+d6tcollect.init(__name__)
+
 #******************************************************************
 # csv
 #******************************************************************
@@ -24,7 +27,7 @@ def csv_count_rows(fname):
 
     return nrows
 
-class CSVSniffer(object):
+class CSVSniffer(object, metaclass=d6tcollect.Collect):
     """
     
     Automatically detects settings needed to read csv files. SINGLE file only, for MULTI file use CSVSnifferList
@@ -139,7 +142,7 @@ class CSVSniffer(object):
         self.has_header_inverse()
         return not self.is_all_rows_number_col
 
-class CSVSnifferList(object):
+class CSVSnifferList(object, metaclass=d6tcollect.Collect):
     """
     
     Automatically detects settings needed to read csv files. MULTI file use

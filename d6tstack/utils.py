@@ -1,6 +1,9 @@
 import pandas as pd
 import warnings
 
+import d6tcollect
+d6tcollect.init(__name__)
+
 class PrintLogger(object):
     def send_log(self, msg, status):
         print(msg,status)
@@ -10,6 +13,7 @@ class PrintLogger(object):
 
 import os
 
+@d6tcollect.collect
 def pd_readsql_query_from_sqlengine(uri, sql, schema_name=None, connect_args=None):
     """
     Load SQL statement into pandas dataframe using `sql_engine.execute` making execution faster.
@@ -42,6 +46,7 @@ def pd_readsql_query_from_sqlengine(uri, sql, schema_name=None, connect_args=Non
     return df
 
 
+@d6tcollect.collect
 def pd_readsql_table_from_sqlengine(uri, table_name, schema_name=None, connect_args=None):
     """
     Load SQL table into pandas dataframe using `sql_engine.execute` making execution faster. Convenience function that returns full table.
@@ -60,6 +65,7 @@ def pd_readsql_table_from_sqlengine(uri, table_name, schema_name=None, connect_a
     return pd_readsql_query_from_sqlengine(uri, "SELECT * FROM {};".fromat(table_name), schema_name=schema_name, connect_args=connect_args)
 
 
+@d6tcollect.collect
 def pd_to_psql(df, uri, table_name, schema_name=None, if_exists='fail', sep=','):
     """
     Load pandas dataframe into a sql table using native postgres COPY FROM.
@@ -102,6 +108,7 @@ def pd_to_psql(df, uri, table_name, schema_name=None, if_exists='fail', sep=',')
     return True
 
 
+@d6tcollect.collect
 def pd_to_mysql(df, uri, table_name, if_exists='fail', tmpfile='mysql.csv', sep=','):
     """
     Load dataframe into a sql table using native postgres LOAD DATA LOCAL INFILE.
@@ -138,6 +145,7 @@ def pd_to_mysql(df, uri, table_name, if_exists='fail', tmpfile='mysql.csv', sep=
 
     return True
 
+@d6tcollect.collect
 def pd_to_mssql(df, uri, table_name, schema_name=None, if_exists='fail', tmpfile='mysql.csv'):
     """
     Load dataframe into a sql table using native postgres LOAD DATA LOCAL INFILE.

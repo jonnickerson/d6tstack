@@ -7,3 +7,4 @@ scipy
 pyarrow
 psycopg2
 mysql-connector
+d6tcollect
