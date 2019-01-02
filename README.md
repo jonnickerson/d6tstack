@@ -109,3 +109,7 @@ Check out other d6t libraries to solve common data engineering problems, includi
 https://github.com/d6t/d6t-python
 
 And we encourage you to join the Databolt blog to get updates and tips+tricks http://blog.databolt.tech
+
+## Usage statistics
+
+This library collects anonymous usage statistics, see [d6tcollect](https://github.com/d6t/d6tcollect) for details including how to disable collection.
