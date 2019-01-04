@@ -9,7 +9,7 @@ import collections
 import csv
 
 import d6tcollect
-d6tcollect.init(__name__)
+# d6tcollect.init(__name__)
 
 #******************************************************************
 # csv

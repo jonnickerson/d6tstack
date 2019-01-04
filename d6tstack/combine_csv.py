@@ -9,7 +9,7 @@ import itertools
 import os
 
 import d6tcollect
-d6tcollect.init(__name__)
+# d6tcollect.init(__name__)
 
 from .helpers import *
 from .utils import PrintLogger

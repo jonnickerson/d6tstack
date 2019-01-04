@@ -13,7 +13,7 @@ from openpyxl.utils import coordinate_from_string
 from d6tstack.helpers import compare_pandas_versions, check_valid_xls
 
 import d6tcollect
-d6tcollect.init(__name__)
+# d6tcollect.init(__name__)
 
 #******************************************************************
 # read_excel_advanced

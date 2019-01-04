@@ -110,6 +110,8 @@ https://github.com/d6t/d6t-python
 
 And we encourage you to join the Databolt blog to get updates and tips+tricks http://blog.databolt.tech
 
-## Usage statistics
+## Collecting Errors Messages and Usage statistics
 
-This library collects anonymous usage statistics, see [d6tcollect](https://github.com/d6t/d6tcollect) for details including how to disable collection.
+To help us make this library better, it collects anonymous error messages and usage statistics. It works similar to how websites collect data. See [d6tcollect](https://github.com/d6t/d6tcollect) for details including how to disable collection.
+
+It might not catch all errors so if you run into any problems, please raise an issue on github.
